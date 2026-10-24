@@ -48,6 +48,7 @@ echo 11. Modo peliculas
 echo 12. Modo juegos
 echo 13. Elegir modo de imagen
 echo 14. Emparejar de nuevo
+echo 15. Actualizar programa
 echo  0. Salir
 echo.
 set "op="
@@ -67,6 +68,7 @@ if "%op%"=="11" %PY% vizio.py modo peliculas & goto pausa
 if "%op%"=="12" %PY% vizio.py modo juegos & goto pausa
 if "%op%"=="13" goto modo
 if "%op%"=="14" goto emparejar
+if "%op%"=="15" goto actualizar
 if "%op%"=="0" exit /b 0
 goto menu
 
@@ -121,6 +123,14 @@ set /p "ip=IP del televisor [192.168.100.2]: "
 pause
 if exist vizio_config.json goto menu
 exit /b 1
+
+:actualizar
+rem Baja la ultima version de GitHub y la copia encima; vizio_config.json no viene en el ZIP y se conserva.
+rem Todo va en una sola linea porque este mismo archivo se reemplaza mientras corre.
+echo Descargando la ultima version...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol='Tls12'; $z=Join-Path $env:TEMP 'control.zip'; $d=Join-Path $env:TEMP 'control_upd'; Invoke-WebRequest -UseBasicParsing 'https://github.com/leobardoparra24-pixel/Control/archive/refs/heads/main.zip' -OutFile $z; if (Test-Path $d) { Remove-Item $d -Recurse -Force }; Expand-Archive $z $d; Copy-Item (Join-Path $d 'Control-main\*') -Destination . -Recurse -Force; Remove-Item $z, $d -Recurse -Force" && start "" "%~f0" && exit
+echo No se pudo actualizar. Revisa tu conexion a internet.
+goto pausa
 
 :pausa
 echo.

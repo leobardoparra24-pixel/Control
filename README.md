@@ -22,6 +22,9 @@ Haz doble clic en **Iniciar.bat**. La primera vez instala lo necesario y te pide
 televisor para emparejar (escribe el PIN que aparece en la pantalla). Después muestra un menú
 con números para encender, apagar, cambiar volumen, entrada, abrir apps, etc.
 
+Para traer la versión más nueva del programa usa la opción **15. Actualizar programa**:
+descarga los cambios de GitHub y los copia en la carpeta sin borrar tu emparejamiento.
+
 Si Windows muestra "Windows protegió su PC", toca **Más información → Ejecutar de todas formas**.
 
 ## Primer uso: emparejar
