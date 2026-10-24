@@ -59,6 +59,10 @@ python vizio.py emparejar --ip 192.168.1.50
 | `python vizio.py app Netflix` | Abre una app |
 | `python vizio.py tecla` | Lista los botones del control remoto |
 | `python vizio.py tecla HOME` | Presiona un botón (HOME, OK, UP, BACK...) |
+| `python vizio.py streaming` | Enciende y cambia a la entrada del Google TV (la pregunta la primera vez) |
+| `python vizio.py streaming --entrada HDMI-3` | Cambia la entrada guardada del Google TV |
+| `python vizio.py modo` | Muestra el modo de imagen actual y los disponibles |
+| `python vizio.py modo peliculas` | Atajos: `peliculas`, `juegos`, `normal` (o el nombre exacto de un modo) |
 | `python vizio.py ajustes` | Lista categorías de ajustes |
 | `python vizio.py ajustes picture` | Muestra los ajustes de imagen |
 | `python vizio.py ajuste picture brightness 40` | Cambia un ajuste |

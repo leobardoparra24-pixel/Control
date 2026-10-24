@@ -11,18 +11,31 @@ Ejemplos:
 import argparse
 import asyncio
 import json
+import logging
 import sys
+import unicodedata
 from pathlib import Path
 
 from pyvizio import VizioAsync
 
 CONFIG = Path(__file__).with_name("vizio_config.json")
 
+# Nombres de modo de imagen a probar, en orden, para cada atajo
+MODOS = {
+    "peliculas": ["Calibrated Dark", "Calibrated", "Movie", "Cinema"],
+    "juegos": ["Game"],
+    "normal": ["Standard", "Calibrated", "Bright"],
+}
+
 
 def cargar_config():
     if not CONFIG.exists():
         sys.exit("Primero empareja el televisor: python vizio.py emparejar --ip <IP>")
     return json.loads(CONFIG.read_text())
+
+
+def guardar_config(config):
+    CONFIG.write_text(json.dumps(config, indent=2))
 
 
 def tv(config=None):
@@ -53,7 +66,9 @@ async def emparejar(args):
     respuesta = await aparato.pair(inicio.ch_type, inicio.token, pin)
     if not respuesta:
         sys.exit("PIN incorrecto o tiempo agotado. Intenta de nuevo.")
-    CONFIG.write_text(json.dumps({"ip": args.ip, "token": respuesta.auth_token}, indent=2))
+    config = json.loads(CONFIG.read_text()) if CONFIG.exists() else {}
+    config.update(ip=args.ip, token=respuesta.auth_token)
+    guardar_config(config)
     print(f"Emparejado. Datos guardados en {CONFIG.name}.")
 
 
@@ -118,6 +133,66 @@ async def tecla(args):
     mostrar(await aparato.remote(args.nombre.upper()))
 
 
+async def streaming(args):
+    config = cargar_config()
+    if args.entrada:
+        config["entrada_streaming"] = args.entrada
+        guardar_config(config)
+    if "entrada_streaming" not in config:
+        entrada = input("En que entrada esta conectado el Google TV? (ej. HDMI-2): ").strip()
+        if not entrada:
+            sys.exit("No se indico ninguna entrada.")
+        config["entrada_streaming"] = entrada.upper()
+        guardar_config(config)
+    entrada = config["entrada_streaming"]
+
+    aparato = tv(config)
+    if not await aparato.get_power_state():
+        mostrar(await aparato.pow_on(), "Encendiendo...")
+    # Recien encendido, el televisor tarda unos segundos en aceptar el cambio de entrada
+    for _ in range(10):
+        if await aparato.set_input(entrada, log_api_exception=False):
+            print(f"Listo, en {entrada}.")
+            return
+        await asyncio.sleep(2)
+    sys.exit(
+        f"No pude cambiar a {entrada}. Revisa el nombre con 'python vizio.py entradas' "
+        "y corrigelo con 'python vizio.py streaming --entrada <nombre>'."
+    )
+
+
+def elegir_modo(nombre, opciones):
+    clave = unicodedata.normalize("NFKD", nombre.lower()).encode("ascii", "ignore").decode()
+    candidatos = [c.lower() for c in MODOS.get(clave, [nombre])]
+    for c in candidatos:
+        for o in opciones:
+            if o.lower() == c:
+                return o
+    for c in candidatos:
+        for o in opciones:
+            if c in o.lower():
+                return o
+    return None
+
+
+async def modo(args):
+    aparato = tv()
+    opciones = await aparato.get_setting_options("picture", "picture_mode")
+    if not isinstance(opciones, list) or not opciones:
+        mostrar(None)
+    if not args.nombre:
+        print("Modo actual:", await aparato.get_setting("picture", "picture_mode"))
+        print("Disponibles:", ", ".join(opciones))
+        return
+    elegido = elegir_modo(args.nombre, opciones)
+    if not elegido:
+        sys.exit(f"No encontre el modo '{args.nombre}'. Disponibles: {', '.join(opciones)}")
+    mostrar(
+        await aparato.set_setting("picture", "picture_mode", elegido),
+        f"Modo de imagen: {elegido}.",
+    )
+
+
 async def ajustes(args):
     aparato = tv()
     if not args.tipo:
@@ -171,6 +246,14 @@ def main():
     p.add_argument("nombre", nargs="?", help="sin nombre muestra la lista de teclas")
     p.set_defaults(func=tecla)
 
+    p = sub.add_parser("streaming", help="encender y cambiar a la entrada del Google TV")
+    p.add_argument("--entrada", help="guardar la entrada a usar, ej. HDMI-2")
+    p.set_defaults(func=streaming)
+
+    p = sub.add_parser("modo", help="ver o cambiar modo de imagen (peliculas, juegos, normal)")
+    p.add_argument("nombre", nargs="?")
+    p.set_defaults(func=modo)
+
     p = sub.add_parser("ajustes", help="ver ajustes (sin tipo lista las categorías)")
     p.add_argument("tipo", nargs="?", help="ej. picture, audio")
     p.set_defaults(func=ajustes)
@@ -182,6 +265,8 @@ def main():
     p.set_defaults(func=ajuste)
 
     args = parser.parse_args()
+    # Los fallos se informan con mensajes propios; se ocultan los de la libreria
+    logging.getLogger("pyvizio").setLevel(logging.CRITICAL)
     asyncio.run(args.func(args))
 
 

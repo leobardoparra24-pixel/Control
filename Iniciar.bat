@@ -43,7 +43,11 @@ echo  6. Silencio
 echo  7. Cambiar entrada (HDMI)
 echo  8. Abrir app
 echo  9. Boton del control remoto
-echo 10. Emparejar de nuevo
+echo 10. Encender en Google TV (HDMI)
+echo 11. Modo peliculas
+echo 12. Modo juegos
+echo 13. Elegir modo de imagen
+echo 14. Emparejar de nuevo
 echo  0. Salir
 echo.
 set "op="
@@ -58,7 +62,11 @@ if "%op%"=="6" %PY% vizio.py silencio & goto pausa
 if "%op%"=="7" goto entrada
 if "%op%"=="8" goto app
 if "%op%"=="9" goto tecla
-if "%op%"=="10" goto emparejar
+if "%op%"=="10" %PY% vizio.py streaming & goto pausa
+if "%op%"=="11" %PY% vizio.py modo peliculas & goto pausa
+if "%op%"=="12" %PY% vizio.py modo juegos & goto pausa
+if "%op%"=="13" goto modo
+if "%op%"=="14" goto emparejar
 if "%op%"=="0" exit /b 0
 goto menu
 
@@ -94,6 +102,14 @@ echo.
 set "nombre="
 set /p "nombre=Escribe el boton (ej. HOME, OK, UP, BACK): "
 if defined nombre %PY% vizio.py tecla "%nombre%"
+goto pausa
+
+:modo
+%PY% vizio.py modo
+echo.
+set "nombre="
+set /p "nombre=Escribe el modo (ej. Calibrated, Game, Vivid): "
+if defined nombre %PY% vizio.py modo "%nombre%"
 goto pausa
 
 :emparejar
