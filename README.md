@@ -16,6 +16,14 @@ usando la misma conexión local que usa la app VIZIO.
 pip install -r requirements.txt
 ```
 
+## Forma fácil en Windows: `Iniciar.bat`
+
+Haz doble clic en **Iniciar.bat**. La primera vez instala lo necesario y te pide la IP del
+televisor para emparejar (escribe el PIN que aparece en la pantalla). Después muestra un menú
+con números para encender, apagar, cambiar volumen, entrada, abrir apps, etc.
+
+Si Windows muestra "Windows protegió su PC", toca **Más información → Ejecutar de todas formas**.
+
 ## Primer uso: emparejar
 
 1. Enciende el televisor.
